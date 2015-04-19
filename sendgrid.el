@@ -23,6 +23,11 @@
 
 (defconst sendgrid-base-url "https://api.sendgrid.com/api")
 
+(defcustom sendgrid-address nil
+  "The address to send emails from."
+  :group 'sendgrid
+  :type 'string)
+
 (defcustom sendgrid-username nil
   "The username to use if not specified."
   :group 'sendgrid
@@ -33,11 +38,11 @@
   :group 'sendgrid
   :type 'string)
 
-(cl-defun sendgrid-send-message (from to
-                                      &key
-                                      (user sendgrid-username)
-                                      (message nil)
-                                      (pass sendgrid-password))
+(cl-defun sendgrid-send-message (to message
+                                    &key
+                                    (from sendgrid-address)
+                                    (user sendgrid-username)
+                                    (pass sendgrid-password))
   "Send MESSAGE from FROM as an email to TO.
 Uses USER if given, otherwise uses sendgrid-username.
 If no MESSAGE is given, sends the current buffer."
@@ -45,15 +50,12 @@ If no MESSAGE is given, sends the current buffer."
    (concat sendgrid-base-url "/mail.send.json")
    :type "POST"
    :parser 'json-read
-   :files (when (not message)
-              `(("text" . ,(current-buffer))))
-   :data (cl-remove-if-not #'identity `(("to" . ,to)
+   :data `(("to" . ,to)
            ("from" . ,from)
            ("subject" . "test")
            ("api_user" . ,user)
            ("api_key" . ,pass)
-           ,(when message
-              (cons "text" message))))))
+           ("text" . ,message))))
 
 (provide 'sendgrid)
 
